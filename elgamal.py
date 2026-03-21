@@ -6,15 +6,20 @@ import random
 runs = 10
 
 # Public parameters for small test group
-p, g, q = (p := 1000000007), 5, p - 1 # safe prime: pow(g, (p - 1) / 2, p) != 1
+p = 1000000007
+q = p - 1
+g = 5
 
 # Public parameters for Oakley group (RFC 2409)
-# p, g, q = (p := int("FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1\
+# p = int("\
+# FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1\
 # 29024E088A67CC74020BBEA63B139B22514A08798E3404DD\
 # EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245\
 # E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED\
 # EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381\
-# FFFFFFFFFFFFFFFF", 16)), 2, (p - 1) // 2
+# FFFFFFFFFFFFFFFF", 16)
+# q = (p - 1) // 2
+# g = 2
 
 # Anamorphic Parameters
 l = 100
@@ -31,8 +36,8 @@ class PublicParams:
 
 class AnamParams:
     def __init__(self, l, s, t):
-        self.F = lambda pp, K, x, y: int.from_bytes( \
-            hmac.new(K, x.to_bytes(8, 'little') + y.to_bytes(8, 'little'), \
+        self.F = lambda pp, K, x, y: int.from_bytes(
+            hmac.new(K, x.to_bytes(8, 'little') + y.to_bytes(8, 'little'),
             hashlib.sha256).digest(), "big") % pp.q
         self.d = lambda ap, x: x % ap.t
         self.l = l
@@ -133,29 +138,8 @@ def test():
     dk = aGen(pp, ap, kp.pk)
     print("(sk, pk) = (%d, %d)" % (kp.sk, kp.pk))
     print("K =", dk.K)
-    print("T = [", ", ".join(str(a) + "->" + str(b) for (a,b) in \
+    print("T = [", ", ".join(str(a) + "->" + str(b) for (a,b) in
         sorted([((pp.g ** i) % pp.p, i) for i in range(l)])), ']')
-
-    # Test aEnc -> Dec and aEnc -> aDec
-    msg = pow(pp.g, random.randint(1, pp.p - 1), pp.p)
-    cm = random.randint(0, l - 1)
-    ctxs = set()
-    # ctr = [0, 0]
-    for i in range(runs):
-        # ctx, ctr = aEncCtr(pp, ap, dk, msg, cm, ctr)
-        ctx = aEnc(pp, ap, dk, msg, cm)
-        ctxs.add(ctx)
-        msg_ = Dec(pp, kp.sk, ctx)
-        cm_ = aDec(pp, ap, dk, ctx)
-        print("(%d, %d) -> aEnc -> (%d, %d) -> Dec -> %d" \
-            % (msg, cm, ctx[0], ctx[1], msg_))
-        print("(%d, %d) -> aEnc -> (%d, %d) -> aDec -> %d" \
-            % (msg, cm, ctx[0], ctx[1], cm_))
-    if len(ctxs) == runs:
-        print("No duplicate ciphertexts detected")
-    else:
-        print(f"{runs - len(ctxs)} duplicate ciphertexts detected, \
-            increase s or use aEncCtr")
 
     # Test Enc -> Dec and Enc -> aDec
     for i in range(runs):
@@ -163,10 +147,31 @@ def test():
         ctx = Enc(pp, kp.pk, msg)
         msg_ = Dec(pp, kp.sk, ctx)
         cm_ = aDec(pp, ap, dk, ctx)
-        print("%d -> Enc -> (%d, %d) -> Dec -> %d" \
+        print("%d -> Enc -> (%d, %d) -> Dec -> %d"
             % (msg, ctx[0], ctx[1], msg_))
-        print("%d -> Enc -> (%d, %d) -> aDec -> %d" \
+        print("%d -> Enc -> (%d, %d) -> aDec -> %d"
             % (msg, ctx[0], ctx[1], cm_), "(!)" if cm_ != -1 else "")
+
+    # Test aEnc -> Dec and aEnc -> aDec
+    msg = pow(pp.g, random.randint(1, pp.p - 1), pp.p)
+    cm = random.randint(0, l - 1)
+    ctxs = set()
+    ctr = [0, 0]
+    for i in range(runs):
+        # ctx, ctr = aEncCtr(pp, ap, dk, msg, cm, ctr)
+        ctx = aEnc(pp, ap, dk, msg, cm)
+        ctxs.add(ctx)
+        msg_ = Dec(pp, kp.sk, ctx)
+        cm_ = aDec(pp, ap, dk, ctx)
+        print("(%d, %d) -> aEnc -> (%d, %d) -> Dec -> %d"
+            % (msg, cm, ctx[0], ctx[1], msg_))
+        print("(%d, %d) -> aEnc -> (%d, %d) -> aDec -> %d"
+            % (msg, cm, ctx[0], ctx[1], cm_))
+    if len(ctxs) == runs:
+        print("No duplicate ciphertexts detected")
+    else:
+        print(f"{runs - len(ctxs)} duplicate ciphertexts detected, "
+            "increase s or use aEncCtr")
 
 
 if __name__ == "__main__":
