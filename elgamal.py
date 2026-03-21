@@ -137,7 +137,7 @@ for i in range(runs):
 if len(ctxs) == runs:
     print("No duplicate ciphertexts detected")
 else:
-    print(f"{runs - len(ctxs)} duplicate ciphertexts detected, increase s")
+    print(f"{runs - len(ctxs)} duplicate ciphertexts detected, increase s or use aEncCtr")
 
 # Testing Enc -> Dec and Enc -> aDec
 for i in range(runs):
