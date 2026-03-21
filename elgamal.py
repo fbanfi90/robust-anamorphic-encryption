@@ -1,5 +1,5 @@
 import random
-from Crypto.Cipher import AES
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 class PublicParams:
     def __init__(self, p, q, g):
@@ -10,8 +10,8 @@ class PublicParams:
 class AnamParams:
     def __init__(self, l, s, t):
         self.F = lambda pp, K, x, y: \
-                    int.from_bytes(AES.new(K, AES.MODE_ECB) \
-                    .encrypt(x.to_bytes(8, 'little') \
+                    int.from_bytes(Cipher(algorithms.AES(K), modes.ECB()).encryptor() \
+                    .update(x.to_bytes(8, 'little')
                     + y.to_bytes(8, 'little')), "little") % pp.p
         self.d = lambda ap, x: x % ap.t
         self.l = l
@@ -51,19 +51,14 @@ def aGen(pp, ap, pk):
     return DoubleKey(K, T, pk)
 
 def aEncCtr(pp, ap, dk, msg, cm, ctr):
-    found = False
-    for x in range(ctr[0], ap.s):
-        for y in range(ctr[1], ap.t):
-            t = ap.F(pp, dk.K, x, y)
-            r = (cm + t) % pp.q
-            if ap.d(ap, pow(pp.g, r, pp.p)) == y:
-                found = True
-                break
-        if found:
+    while True:
+        ctr[0] = (ctr[0] + 1) % ap.s
+        if ctr[0] == 0:
+            ctr[1] = (ctr[1] + 1) % ap.t
+        t = ap.F(pp, dk.K, ctr[0], ctr[1])
+        r = (cm + t) % pp.q
+        if ap.d(ap, pow(pp.g, r, pp.p)) == ctr[1]:
             break
-        ctr[1] = 0
-    ctr[0] = (x + (1 if y == ap.t - 1 else 0)) % ap.s
-    ctr[1] = (y + 1) % ap.t
     c0 = (msg * pow(dk.pk, r, pp.p)) % pp.p
     c1 = pow(pp.g, r, pp.p)
     ctx = (c0, c1)
@@ -128,9 +123,9 @@ print("T = [", ", ".join(str(a) + "->" + str(b) for (a,b) in \
 # Testing aEnc -> Dec and aEnc -> aDec
 msg = random.randint(1, pp.p - 1)
 cm = random.randint(0, l - 1)
-#ctr = [0, 0]
+# ctr = [0, 0]
 for i in range(runs):
-    #c, ctr = aEncCtr(pp, dk, msg, cm, ctr)
+    # ctx, ctr = aEncCtr(pp, ap, dk, msg, cm, ctr)
     ctx = aEnc(pp, ap, dk, msg, cm)
     msg_ = Dec(pp, kp.sk, ctx)
     cm_ = aDec(pp, ap, dk, ctx)
