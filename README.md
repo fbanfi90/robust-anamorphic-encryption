@@ -12,13 +12,13 @@ The goal is **not** production security or performance. It is meant to **demonst
 
 ## Requirements
 
-- Python 3
-- PyCryptodome (`python -m pip install pycryptodome` or install as system package `python3-pycryptodome` / `python-pycryptodome`)
+- Python 3.8+
+- cryptography (`python3 -m pip install cryptography` or install as system package `python3-cryptography`)
 
 ## Run
 
 ```bash
-python elgamal.py
+python3 elgamal.py
 ```
 
 The script prints parameters and then runs two test phases:
