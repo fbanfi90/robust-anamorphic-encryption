@@ -12,7 +12,7 @@ class AnamParams:
         self.F = lambda pp, K, x, y: \
                     int.from_bytes(Cipher(algorithms.AES(K), modes.ECB()).encryptor() \
                     .update(x.to_bytes(8, 'little')
-                    + y.to_bytes(8, 'little')), "little") % pp.p
+                    + y.to_bytes(8, 'little')), "little") % pp.q
         self.d = lambda ap, x: x % ap.t
         self.l = l
         self.s = s
@@ -87,17 +87,16 @@ def aDec(pp, ap, dk, ctx):
     return -1
 
 # Settings
-runs = 50
+runs = 10
 
 # Public Parameters (safe prime, pow(g, (p - 1) // 2, p) != 1)
-#p, g = int("0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1\
-#29024E088A67CC74020BBEA63B139B22514A08798E3404DD\
-#EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245\
-#E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED\
-#EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381\
-#FFFFFFFFFFFFFFFF", 0), 5 # Oakley group (RFC 2409)
-p, g = 1000000007, 5
-q = p - 1
+# p, g, q = (p := int("FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1\
+# 29024E088A67CC74020BBEA63B139B22514A08798E3404DD\
+# EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245\
+# E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED\
+# EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381\
+# FFFFFFFFFFFFFFFF", 16)), 2, (p - 1) // 2 # Oakley group (RFC 2409)
+p, g, q = (p := 1000000007), 5, p - 1 # Small group for testing
 pp = PublicParams(p, q, g)
 print("p =", pp.p)
 print("q =", pp.q)
@@ -109,8 +108,8 @@ s = 100
 t = 100
 ap = AnamParams(l, s, t)
 print("l =", ap.l)
-print("s =", ap.t)
-print("t =", ap.s)
+print("s =", ap.s)
+print("t =", ap.t)
 
 # Keys Generation
 kp = Gen(pp)
@@ -123,16 +122,22 @@ print("T = [", ", ".join(str(a) + "->" + str(b) for (a,b) in \
 # Testing aEnc -> Dec and aEnc -> aDec
 msg = random.randint(1, pp.p - 1)
 cm = random.randint(0, l - 1)
+ctxs = set()
 # ctr = [0, 0]
 for i in range(runs):
     # ctx, ctr = aEncCtr(pp, ap, dk, msg, cm, ctr)
     ctx = aEnc(pp, ap, dk, msg, cm)
+    ctxs.add(ctx)
     msg_ = Dec(pp, kp.sk, ctx)
     cm_ = aDec(pp, ap, dk, ctx)
     print("(%d, %d) -> aEnc -> (%d, %d) -> Dec -> %d" \
         % (msg, cm, ctx[0], ctx[1], msg_))
     print("(%d, %d) -> aEnc -> (%d, %d) -> aDec -> %d" \
         % (msg, cm, ctx[0], ctx[1], cm_))
+if len(ctxs) == runs:
+    print("No duplicate ciphertexts detected")
+else:
+    print(f"{runs - len(ctxs)} duplicate ciphertexts detected, increase s")
 
 # Testing Enc -> Dec and Enc -> aDec
 for i in range(runs):
