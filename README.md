@@ -18,17 +18,17 @@ python3 elgamal.py
 
 The script prints parameters and then runs two test phases:
 
-### 1) Anamorphic encryption tests ($\textsf{aEnc} \rightarrow \textsf{Dec}$ and $\textsf{aEnc} \rightarrow \textsf{aDec}$)
-For a fixed $(m, \hat m)$ it repeatedly:
-- encrypts anamorphically ($\textsf{aEnc}$) to produce a ciphertext $(c_0,c_1)$
-- decrypts normally ($\textsf{Dec}$) to recover $m$
-- decrypts anamorphically ($\textsf{aDec}$) to recover $\hat m$
-
-### 2) Normal encryption tests ($\textsf{Enc} \rightarrow \textsf{Dec}$ and $\textsf{Enc} \rightarrow \textsf{aDec}$)
+### 1) Normal encryption tests ($\textsf{Enc} \rightarrow \textsf{Dec}$ and $\textsf{Enc} \rightarrow \textsf{aDec}$)
 For many random plaintext messages $m$ it repeatedly:
 - encrypts normally ($\textsf{Enc}$) to produce a ciphertext $(c_0,c_1)$
 - decrypts normally ($\textsf{Dec}$) to recover $m$
 - decrypts anamorphically ($\textsf{aDec}$), which should return $\bot$ (`-1`)
+
+### 2) Anamorphic encryption tests ($\textsf{aEnc} \rightarrow \textsf{Dec}$ and $\textsf{aEnc} \rightarrow \textsf{aDec}$)
+For a fixed $(m, \hat m)$ it repeatedly:
+- encrypts anamorphically ($\textsf{aEnc}$) to produce a ciphertext $(c_0,c_1)$
+- decrypts normally ($\textsf{Dec}$) to recover $m$
+- decrypts anamorphically ($\textsf{aDec}$) to recover $\hat m$
 
 ## Notes / Caveats
 
