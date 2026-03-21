@@ -120,7 +120,7 @@ print("T = [", ", ".join(str(a) + "->" + str(b) for (a,b) in \
     sorted([((pp.g ** i) % pp.p, i) for i in range(l)])), ']')
 
 # Testing aEnc -> Dec and aEnc -> aDec
-msg = random.randint(1, pp.p - 1)
+msg = pow(pp.g, random.randint(1, pp.p - 1), pp.p)
 cm = random.randint(0, l - 1)
 ctxs = set()
 # ctr = [0, 0]
@@ -141,11 +141,11 @@ else:
 
 # Testing Enc -> Dec and Enc -> aDec
 for i in range(runs):
-    m = random.randint(1, pp.p - 1)
-    ctx = Enc(pp, kp.pk, m)
+    msg = pow(pp.g, random.randint(1, pp.p - 1), pp.p)
+    ctx = Enc(pp, kp.pk, msg)
     msg_ = Dec(pp, kp.sk, ctx)
     cm_ = aDec(pp, ap, dk, ctx)
     print("%d -> Enc -> (%d, %d) -> Dec -> %d" \
-        % (m, ctx[0], ctx[1], msg_))
+        % (msg, ctx[0], ctx[1], msg_))
     print("%d -> Enc -> (%d, %d) -> aDec -> %d" \
-        % (m, ctx[0], ctx[1], cm_), "(!)" if cm_ != -1 else "")
+        % (msg, ctx[0], ctx[1], cm_), "(!)" if cm_ != -1 else "")
