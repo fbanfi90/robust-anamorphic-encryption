@@ -1,6 +1,6 @@
 # ElGamal Robust Anamorphic Encryption PoC
 
-This repository contains a **small, self-contained proof-of-concept** implementation of the **robust anamorphic encryption** construction instantiated with **ElGamal**, corresponding to the code included in the appendix of the paper https://eprint.iacr.org/2023/249.pdf
+This repository contains a **small, self-contained proof-of-concept** implementation of the **robust anamorphic encryption** construction instantiated with **ElGamal**, corresponding to an updated version of the code included in the appendix of the paper https://eprint.iacr.org/2023/249.pdf
 
 The goal is **not** production security or performance. It is meant to **demonstrate correctness** of the proposed construction by:
 1. **Encrypting anamorphically** many times and showing that decryption recovers:
@@ -9,11 +9,6 @@ The goal is **not** production security or performance. It is meant to **demonst
 2. **Encrypting normally** many times and showing that:
    - standard decryption returns the correct plaintext, while
    - anamorphic decryption correctly indicate that there is no covert message.
-
-## Requirements
-
-- Python 3.8+
-- cryptography (`python3 -m pip install cryptography` or install as system package `python3-cryptography`)
 
 ## Run
 
