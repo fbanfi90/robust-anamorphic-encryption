@@ -35,3 +35,6 @@ For a fixed $(m, \hat m)$ it repeatedly:
 - This is a **didactic PoC** only.
 - Parameters in the script are small / toy (a larger group is shown commented out).
 - Randomness uses Python's `random` module for simplicity.
+- Unlike the paper, this version unifies the counter space into a single parameter $\sigma$.[^1]
+
+[^1]: The original paper uses two parameters $\sigma$ and $\tau$, splitting the PRF input as $(x,y)$ with $x\in[\sigma]$ and $y\in[\tau]$ to guarantee that at least the $y$-half could always be extracted from the ciphertext. This version eliminates that constraint by allowing full counter recovery via brute-force search, making $y$ and hence $\tau$ redundant: security depends only on $\sigma$ (search difficulty), not on the PRF input's internal structure.

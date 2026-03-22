@@ -24,7 +24,6 @@ g = 5
 # Anamorphic Parameters
 l = 100
 s = 100
-t = 100
 
 
 class PublicParams:
@@ -35,14 +34,12 @@ class PublicParams:
 
 
 class AnamParams:
-    def __init__(self, l, s, t):
-        self.F = lambda pp, K, x, y: int.from_bytes(
-            hmac.new(K, x.to_bytes(8, 'little') + y.to_bytes(8, 'little'),
+    def __init__(self, l, s):
+        self.F = lambda pp, K, x: int.from_bytes(
+            hmac.new(K, x.to_bytes(8, 'little'),
             hashlib.sha256).digest(), "big") % pp.q
-        self.d = lambda ap, x: x % ap.t
         self.l = l
         self.s = s
-        self.t = t
 
 
 class KeyPair:
@@ -83,29 +80,20 @@ def aGen(pp, ap, pk):
     return DoubleKey(K, T, pk)
 
 
-def aEncCtr(pp, ap, dk, msg, cm, ctr):
-    while True:
-        ctr[0] = (ctr[0] + 1) % ap.s
-        if ctr[0] == 0:
-            ctr[1] = (ctr[1] + 1) % ap.t
-        t = ap.F(pp, dk.K, ctr[0], ctr[1])
-        r = (cm + t) % pp.q
-        if ap.d(ap, pow(pp.g, r, pp.p)) == ctr[1]:
-            break
+def aEncCtr(pp, ap, dk, msg, cm, x):
+    x = (x + 1) % ap.s
+    t = ap.F(pp, dk.K, x)
+    r = (cm + t) % pp.q
     c0 = (msg * pow(dk.pk, r, pp.p)) % pp.p
     c1 = pow(pp.g, r, pp.p)
     ctx = (c0, c1)
-    return ctx, ctr
+    return ctx, x
 
 
 def aEnc(pp, ap, dk, msg, cm):
-    while True:
-        x = random.randint(0, ap.s - 1)
-        y = random.randint(0, ap.t - 1)
-        t = ap.F(pp, dk.K, x, y)
-        r = (cm + t) % pp.q
-        if ap.d(ap, pow(pp.g, r, pp.p)) == y:
-            break
+    x = random.randint(0, ap.s - 1)
+    t = ap.F(pp, dk.K, x)
+    r = (cm + t) % pp.q
     c0 = (msg * pow(dk.pk, r, pp.p)) % pp.p
     c1 = pow(pp.g, r, pp.p)
     ctx = (c0, c1)
@@ -113,9 +101,8 @@ def aEnc(pp, ap, dk, msg, cm):
 
 
 def aDec(pp, ap, dk, ctx):
-    y = ap.d(ap, ctx[1])
     for x in range(ap.s):
-        t = ap.F(pp, dk.K, x, y)
+        t = ap.F(pp, dk.K, x)
         s = (ctx[1] * pow(pp.g, -t, pp.p)) % pp.p
         if s in dk.T:
             return dk.T[s]
@@ -125,20 +112,19 @@ def aDec(pp, ap, dk, ctx):
 def test():
     # Set and print public parameters
     pp = PublicParams(p, q, g)
-    ap = AnamParams(l, s, t)
+    ap = AnamParams(l, s)
     print("p =", pp.p)
     print("q =", pp.q)
     print("g =", pp.g)
     print("l =", ap.l)
     print("s =", ap.s)
-    print("t =", ap.t)
 
     # Generate keys
     kp = Gen(pp)
     dk = aGen(pp, ap, kp.pk)
     print("(sk, pk) = (%d, %d)" % (kp.sk, kp.pk))
     print("K =", dk.K)
-    print("T = [", ", ".join(str(a) + "->" + str(b) for (a,b) in
+    print("T = [", ", ".join(str(a) + "->" + str(b) for (a, b) in
         sorted([((pp.g ** i) % pp.p, i) for i in range(l)])), ']')
 
     # Test Enc -> Dec and Enc -> aDec
@@ -156,7 +142,7 @@ def test():
     msg = pow(pp.g, random.randint(1, pp.p - 1), pp.p)
     cm = random.randint(0, l - 1)
     ctxs = set()
-    ctr = [0, 0]
+    ctr = 0
     for i in range(runs):
         # ctx, ctr = aEncCtr(pp, ap, dk, msg, cm, ctr)
         ctx = aEnc(pp, ap, dk, msg, cm)
